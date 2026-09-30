@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Corporate Financial Distress Model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F1420; --panel:#161D2C; --panel2:#1C2436; --line:#2A3346;
+    --ink:#E9ECF3; --ink-dim:#96A0B8; --gold:#C9A464; --red:#C1543C; --green:#4E8F6C; --amber:#C99A4E;
+    --serif:'Source Serif 4', Georgia, serif; --sans:'IBM Plex Sans', Arial, sans-serif; --mono:'IBM Plex Mono', monospace;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){ --bg:#F5F3EE; --panel:#FFFFFF; --panel2:#FBFAF7; --line:#DEDACF; --ink:#1B1F2A; --ink-dim:#5B6172; }
+  }
+  :root[data-theme="light"]{ --bg:#F5F3EE; --panel:#FFFFFF; --panel2:#FBFAF7; --line:#DEDACF; --ink:#1B1F2A; --ink-dim:#5B6172; }
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.55;}
+  .wrap{max-width:920px; margin:0 auto; padding:0 24px;}
+  header.hero{padding:72px 0 48px; border-bottom:1px solid var(--line);}
+  .kicker{font-family:var(--mono); font-size:13px; color:var(--gold); letter-spacing:.02em; margin:0 0 18px;}
+  h1{font-family:var(--serif); font-weight:600; font-size:clamp(32px,5vw,50px); line-height:1.12; margin:0 0 20px; max-width:14ch;}
+  .lede{font-size:18px; color:var(--ink-dim); max-width:56ch; margin:0 0 32px;}
+  .heronums{display:flex; gap:40px; flex-wrap:wrap;}
+  .hn b{display:block; font-family:var(--serif); font-size:34px; color:var(--gold);}
+  .hn span{font-size:13px; color:var(--ink-dim);}
+  section{padding:52px 0; border-bottom:1px solid var(--line);}
+  h2{font-family:var(--serif); font-weight:600; font-size:26px; margin:0 0 8px;}
+  .sub{color:var(--ink-dim); max-width:60ch; margin:0 0 28px; font-size:15px;}
+  table{width:100%; border-collapse:collapse; font-size:14px; margin-top:24px;}
+  th,td{padding:11px 10px; text-align:right; border-bottom:1px solid var(--line);}
+  th:first-child,td:first-child{text-align:left; color:var(--ink);}
+  th{font-family:var(--mono); font-weight:500; font-size:12px; color:var(--ink-dim);}
+  tr.best td{color:var(--gold); font-weight:600;}
+  .tabs{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:22px;}
+  .tab{font-family:var(--mono); font-size:12px; padding:7px 13px; border-radius:20px; border:1px solid var(--line); background:transparent; color:var(--ink-dim); cursor:pointer;}
+  .tab.active{background:var(--gold); color:#1B1405; border-color:var(--gold);}
+  .barrow{display:grid; grid-template-columns:150px 1fr 56px; align-items:center; gap:12px; margin:12px 0;}
+  .barrow .lbl{font-size:14px;}
+  .bartrack{background:var(--panel2); border:1px solid var(--line); border-radius:3px; height:16px; overflow:hidden;}
+  .barfill{height:100%; border-radius:2px; transition:width .5s ease, background .3s ease;}
+  .barval{font-family:var(--mono); font-size:13px; text-align:right; color:var(--ink-dim);}
+  .cards{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:8px;}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:20px;}
+  .card h3{font-family:var(--serif); font-size:18px; margin:0 0 8px; font-weight:600;}
+  .card p{color:var(--ink-dim); font-size:14px; margin:0;}
+  .tag{display:inline-block; font-family:var(--mono); font-size:11px; padding:2px 8px; border-radius:3px; margin-bottom:10px;}
+  .tag.win{background:rgba(78,143,108,.15); color:var(--green);}
+  .tag.risk{background:rgba(193,84,60,.15); color:var(--red);}
+  .featlist .barrow{cursor:default; position:relative;}
+  .featlist .lbl{border-bottom:1px dotted var(--ink-dim);}
+  .tip{display:none; position:absolute; left:150px; top:100%; z-index:5; background:var(--panel2); border:1px solid var(--line); border-radius:4px; padding:8px 12px; font-size:12px; color:var(--ink-dim); max-width:280px;}
+  .barrow:hover .tip{display:block;}
+  .calc{display:grid; grid-template-columns:1fr 260px; gap:32px; align-items:start;}
+  .sliders label{display:block; font-size:13px; margin:16px 0 6px; color:var(--ink);}
+  .sliders label span{color:var(--gold); font-family:var(--mono); float:right;}
+  input[type=range]{width:100%; accent-color:var(--gold);}
+  .gaugewrap{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:24px; text-align:center;}
+  .gauge{width:220px; height:110px; margin:0 auto; position:relative; overflow:hidden;}
+  .gauge .arc{width:220px; height:220px; border-radius:50%; background:conic-gradient(from 180deg, var(--green) 0deg, var(--amber) 90deg, var(--red) 180deg, transparent 180deg); position:absolute; top:0;}
+  .gauge .mask{position:absolute; top:22px; left:22px; width:176px; height:176px; border-radius:50%; background:var(--panel);}
+  .needle{position:absolute; bottom:0; left:110px; width:2px; height:95px; background:var(--ink); transform-origin:bottom center; transform:rotate(0deg); transition:transform .4s ease;}
+  .riskpct{font-family:var(--serif); font-size:32px; margin-top:8px;}
+  .risklabel{font-family:var(--mono); font-size:12px; letter-spacing:.03em; margin-top:2px;}
+  .disclaimer{font-size:12px; color:var(--ink-dim); margin-top:18px; padding-top:14px; border-top:1px dashed var(--line);}
+  .foot{padding:40px 0 80px; color:var(--ink-dim); font-size:13px;}
+  .foot p{max-width:70ch;}
+  @media (max-width:640px){ .cards{grid-template-columns:1fr;} .barrow{grid-template-columns:110px 1fr 48px;} .calc{grid-template-columns:1fr;} .tip{left:0;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="kicker">FINANCIAL DISTRESS MODEL — INVESTOR BRIEF</p>
+  <h1>Spotting corporate distress before the balance sheet says so</h1>
+  <p class="lede">A machine-learning model trained on 43,405 Polish company filings to flag firms heading toward bankruptcy — benchmarked against the traditional Altman Z-Score.</p>
+  <div class="heronums">
+    <div class="hn"><b>43,405</b><span>company-year records</span></div>
+    <div class="hn"><b>4.8%</b><span>went bankrupt</span></div>
+    <div class="hn"><b>0.96</b><span>best model AUC</span></div>
+  </div>
+</header>
+
+<section>
+  <h2>How the models stack up</h2>
+  <p class="sub">Every model was tested on the same 8,681 held-out firms (418 of them later went bankrupt). Switch metrics to see where each model wins and loses.</p>
+  <div class="tabs" id="tabs"></div>
+  <div id="chart"></div>
+  <table>
+    <tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th><th>AUC</th></tr>
+    <tr><td>Altman Z-Score (benchmark)</td><td>52.6%</td><td>6.7%</td><td>68.7%</td><td>0.122</td><td>0.632</td></tr>
+    <tr><td>Neural Network</td><td>90.2%</td><td>23.5%</td><td>46.2%</td><td>0.312</td><td>0.813</td></tr>
+    <tr><td>Random Forest</td><td>95.6%</td><td>55.2%</td><td>48.6%</td><td>0.517</td><td>0.927</td></tr>
+    <tr class="best"><td>XGBoost</td><td>97.3%</td><td>79.9%</td><td>57.9%</td><td>0.671</td><td>0.962</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>What "recall" and "precision" mean for a portfolio</h2>
+  <p class="sub">Recall is the share of eventual bankruptcies the model actually caught in advance. Precision is how often a "distress" flag turns out to be right.</p>
+  <div class="cards">
+    <div class="card">
+      <span class="tag risk">Old approach</span>
+      <h3>Altman Z-Score</h3>
+      <p>Catches 69% of failures — but for every 15 firms it flags, only 1 actually goes bankrupt. Too noisy to act on directly.</p>
+    </div>
+    <div class="card">
+      <span class="tag win">New approach</span>
+      <h3>XGBoost</h3>
+      <p>Catches 58% of failures, and when it flags a firm, it's right 80% of the time — a far more actionable signal for screening or diligence.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>What actually drives the risk score</h2>
+  <p class="sub">Ranked by XGBoost's feature importance. Hover a bar for what the ratio means.</p>
+  <div class="featlist" id="feat"></div>
+</section>
+
+<section>
+  <h2>Try it: quick risk estimator</h2>
+  <p class="sub">Move the sliders to see how a firm's ratios push its estimated risk up or down. This is a simplified illustration using the model's published feature weights — not a live call to the trained XGBoost model.</p>
+  <div class="calc">
+    <div class="sliders" id="sliders"></div>
+    <div class="gaugewrap">
+      <div class="gauge"><div class="arc"></div><div class="mask"></div><div class="needle" id="needle"></div></div>
+      <div class="riskpct" id="riskpct">—</div>
+      <div class="risklabel" id="risklabel">MOVE A SLIDER</div>
+      <div class="disclaimer">Illustrative only — for the real prediction, run the trained model on a firm's full ratio set.</div>
+    </div>
+  </div>
+</section>
+
+<section style="border-bottom:none;">
+  <h2>How the model was built</h2>
+  <p class="sub">Dataset: UCI's Polish Companies Bankruptcy data (2000–2013), 65 financial ratios per firm-year. Missing values filled with the median; the training set was rebalanced with SMOTE since bankruptcies are rare (4.8%) — the 8,681-firm test set was left untouched at its real-world rate. Random Forest, XGBoost and a Neural Network were each tuned via grid search optimizing for recall, then compared against the classic Altman Z'-Score.</p>
+</section>
+
+<div class="foot">
+  <p><strong>Not investment advice.</strong> This is a research and educational model built on historical Polish company data from 2000–2013. Financial ratios that predicted distress in that market and period may not transfer directly to other geographies, sectors, or time horizons. Use as one input among many, alongside qualitative diligence.</p>
+</div>
+
+</div>
+
+<script>
+// ---- Metric toggle chart ----
+const models = ['Altman Z-Score','Neural Network','Random Forest','XGBoost'];
+const colors = ['#C1543C','#96A0B8','#8FA8C9','#C9A464'];
+const metrics = {
+  Accuracy:[52.6,90.2,95.6,97.3],
+  Precision:[6.7,23.5,55.2,79.9],
+  Recall:[68.7,46.2,48.6,57.9],
+  'F1-score':[12.2,31.2,51.7,67.1],
+  AUC:[63.2,81.3,92.7,96.2]
+};
+const tabsEl = document.getElementById('tabs');
+const chartEl = document.getElementById('chart');
+Object.keys(metrics).forEach((m,i)=>{
+  const b = document.createElement('button');
+  b.className = 'tab' + (i===2?' active':'');
+  b.textContent = m;
+  b.onclick = ()=>{ document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); b.classList.add('active'); draw(m); };
+  tabsEl.appendChild(b);
+});
+function draw(metric){
+  const vals = metrics[metric];
+  chartEl.innerHTML = '';
+  models.forEach((name,i)=>{
+    const row = document.createElement('div'); row.className='barrow';
+    row.innerHTML = `<span class="lbl">${name}</span><div class="bartrack"><div class="barfill" style="width:0%;background:${colors[i]}"></div></div><span class="barval">${vals[i].toFixed(1)}%</span>`;
+    chartEl.appendChild(row);
+    requestAnimationFrame(()=>{ row.querySelector('.barfill').style.width = vals[i]+'%'; });
+  });
+}
+draw('Recall');
+
+// ---- Feature importance with tooltips ----
+const feats = [
+  ['Return on assets','Net profit ÷ total assets — how much profit the firm squeezes from what it owns.',11.8,100],
+  ['EBIT / assets','Operating earnings before interest and tax ÷ total assets.',8.7,74],
+  ['Assets / liabilities','How many times over total assets could cover total debt.',7.1,60],
+  ['Interest coverage','Operating profit ÷ financial expenses — room to pay interest.',6.3,53],
+  ['Quick liquidity','Cash-like assets ÷ short-term liabilities — can it pay bills due soon.',5.8,49],
+  ['Operating margin','Profit on sales ÷ sales — pricing and cost discipline.',4.0,33],
+  ['Working capital / fixed assets','Short-term cushion relative to long-term assets.',3.8,32],
+  ['Retained capital / assets','Share of assets funded by kept earnings, not new equity.',2.8,24],
+];
+const featEl = document.getElementById('feat');
+feats.forEach(([name,def,pct,width])=>{
+  const row = document.createElement('div'); row.className='barrow';
+  row.innerHTML = `<span class="lbl">${name}</span><div class="bartrack"><div class="barfill" style="width:${width}%;background:var(--gold)"></div></div><span class="barval">${pct}%</span><div class="tip">${def}</div>`;
+  featEl.appendChild(row);
+});
+
+// ---- Risk estimator ----
+const sliderDefs = [
+  {id:'roa', label:'Return on assets', min:-0.2, max:0.2, step:0.01, def:0.03, w:0.27, fmt:v=>v.toFixed(2)},
+  {id:'ebit', label:'EBIT / assets', min:-0.15, max:0.2, step:0.01, def:0.05, w:0.20, fmt:v=>v.toFixed(2)},
+  {id:'al', label:'Assets / liabilities', min:0.5, max:3, step:0.05, def:1.4, w:0.16, fmt:v=>v.toFixed(2)+'x'},
+  {id:'ic', label:'Interest coverage', min:-5, max:15, step:0.5, def:2, w:0.14, fmt:v=>v.toFixed(1)+'x'},
+  {id:'ql', label:'Quick liquidity', min:0, max:2, step:0.05, def:0.6, w:0.13, fmt:v=>v.toFixed(2)},
+  {id:'om', label:'Operating margin', min:-0.2, max:0.2, step:0.01, def:0.04, w:0.10, fmt:v=>v.toFixed(2)},
+];
+const slidersEl = document.getElementById('sliders');
+sliderDefs.forEach(s=>{
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `<label for="${s.id}">${s.label} <span id="${s.id}val">${s.fmt(s.def)}</span></label>
+    <input type="range" id="${s.id}" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.def}">`;
+  slidersEl.appendChild(wrap);
+});
+function computeRisk(){
+  let health = 0;
+  sliderDefs.forEach(s=>{
+    const v = parseFloat(document.getElementById(s.id).value);
+    document.getElementById(s.id+'val').textContent = s.fmt(v);
+    const norm = Math.min(1, Math.max(0, (v - s.min) / (s.max - s.min)));
+    health += norm * s.w;
+  });
+  const risk = Math.round((1 - health) * 100);
+  const needle = document.getElementById('needle');
+  needle.style.transform = `rotate(${(risk/100)*180 - 90}deg)`;
+  document.getElementById('riskpct').textContent = risk + '%';
+  document.getElementById('riskpct').style.color = risk<33?'var(--green)':risk<66?'var(--amber)':'var(--red)';
+  document.getElementById('risklabel').textContent = risk<33?'LOWER RISK PROFILE':risk<66?'MODERATE RISK PROFILE':'ELEVATED RISK PROFILE';
+}
+sliderDefs.forEach(s=> document.getElementById(s.id).addEventListener('input', computeRisk));
+computeRisk();
+</script>
+</body>
+</html>
